@@ -157,6 +157,26 @@ def split_cloud_into_samples(
         sample_points = points[sample_idx]
         yield sample_idx, sample_points
 
+def count_cloud_samples(
+    las_path: str,
+    tile_width: Number,
+    subtile_width: Number,
+    epsg: str,
+    subtile_overlap: Number = 0,
+):
+    points = pdal_read_las_array_as_float32(las_path, epsg)
+    pos = np.asarray([points["X"], points["Y"], points["Z"]], dtype=np.float32).transpose()
+    kd_tree = cKDTree(pos[:, :2] - pos[:, :2].min(axis=0))
+    XYs = get_mosaic_of_centers(tile_width, subtile_width, subtile_overlap=subtile_overlap)
+    count = 0
+    for center in XYs:
+        radius = subtile_width // 2
+        minkowski_p = np.inf
+        sample_idx = np.array(kd_tree.query_ball_point(center, r=radius, p=minkowski_p))
+        if not len(sample_idx):
+            continue
+        count += 1
+    return count
 
 def pre_filter_below_n_points(data, min_num_nodes=1):
     return data.pos.shape[0] < min_num_nodes

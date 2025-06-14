@@ -9,6 +9,7 @@ from torch_geometric.data import Data
 from myria3d.pctl.dataset.utils import (
     pre_filter_below_n_points,
     split_cloud_into_samples,
+    count_cloud_samples,
 )
 from myria3d.pctl.points_pre_transform.lidar_hd import lidar_hd_pre_transform
 
@@ -40,6 +41,16 @@ class InferenceDataset(IterableDataset):
 
     def __iter__(self):
         return self.get_iterator()
+    
+    def __len__(self):
+        """Return the number of samples in the dataset."""
+        return count_cloud_samples(
+            self.las_file,
+            self.tile_width,
+            self.subtile_width,
+            self.epsg,
+            self.subtile_overlap,
+        )
 
     def get_iterator(self):
         """Yield subtiles from all tiles in an exhaustive fashion."""
