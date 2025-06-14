@@ -190,7 +190,7 @@ def get_las_paths_by_split_dict(
     for phase in ["train", "val", "test"]:
         basenames = split_df[split_df.split == phase].basename.tolist()
         # Reminder: an explicit data structure with ./val, ./train, ./test subfolder is required.
-        las_paths_by_split_dict[phase] = [str(Path(data_dir) / phase / b) for b in basenames]
+        las_paths_by_split_dict[phase] = [str(Path(data_dir) / b) for b in basenames]
 
     if not las_paths_by_split_dict:
         raise FileNotFoundError(
