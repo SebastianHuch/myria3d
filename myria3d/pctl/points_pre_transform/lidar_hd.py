@@ -27,7 +27,7 @@ def lidar_hd_pre_transform(points):
     points["NumberOfReturns"] = (points["NumberOfReturns"]) / RETURN_NUMBER_NORMALIZATION_MAX_VALUE
 
     # Ensure all color fields exist, even if missing (filled with 0)
-    for color in ["Red", "Green", "Blue", "Infrared"]:
+    for color in ["Red", "Green", "Blue"]:
         if color not in points.dtype.names:
             print(f"Color channel {color} not found. Creating fake {color} filled with 0.")
             fake_color = np.zeros(points.shape[0], dtype=np.float32)
@@ -35,7 +35,7 @@ def lidar_hd_pre_transform(points):
 
     # Normalize colors if available
     available_colors = []
-    for color in ["Red", "Green", "Blue", "Infrared"]:
+    for color in ["Red", "Green", "Blue"]:
         if color in points.dtype.names:
             assert points[color].max() <= COLORS_NORMALIZATION_MAX_VALUE, f"{color} max too high!"
             points[color][:] = points[color] / COLORS_NORMALIZATION_MAX_VALUE
@@ -59,26 +59,28 @@ def lidar_hd_pre_transform(points):
         ndvi = (points["Infrared"] - points["Red"]) / (points["Infrared"] + points["Red"] + 1e-6)
 
     # Features list: dynamically adapt based on what exists
-    x_list = [
-        points["Intensity"],
-        points["ReturnNumber"],
-        points["NumberOfReturns"],
-    ]
+    x_list = []
+    x_features_names = []
+    # x_list = [
+    #     points["Intensity"],
+    #     points["ReturnNumber"],
+    #     points["NumberOfReturns"],
+    # ]
 
-    x_features_names = [
-        "Intensity",
-        "ReturnNumber",
-        "NumberOfReturns",
-    ]
+    # x_features_names = [
+    #     "Intensity",
+    #     "ReturnNumber",
+    #     "NumberOfReturns",
+    # ]
 
-    for color in ["Red", "Green", "Blue", "Infrared"]:
+    for color in ["Red", "Green", "Blue"]:
         if color in points.dtype.names:
             x_list.append(points[color])
             x_features_names.append(color)
 
     # Always add computed features
-    x_list += [rgb_avg, ndvi]
-    x_features_names += ["rgb_avg", "ndvi"]
+    x_list += [rgb_avg]
+    x_features_names += ["rgb_avg"]
 
     x = np.stack(x_list, axis=0).transpose()
 
