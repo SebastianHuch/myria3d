@@ -28,6 +28,7 @@ dependencies:
   # --------- data formats --------- #
   - numpy
   - h5py
+  - laspy
   # --------- geo --------- #
   - pdal==2.6.*
   - python-pdal

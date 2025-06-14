@@ -10,12 +10,14 @@ COPY environment.yml environment.yml
 # installation similar to https://github.com/mamba-org/micromamba-docker/issues/356)
 USER root
 
-RUN micromamba env create -f /app/environment.yml
+RUN micromamba env create -f /app/environment.yml -y
 
 ENV PATH=$PATH:/opt/conda/envs/myria3d/bin/
 # Need to export this for torch_geometric to find where cuda is.
 # See https://github.com/pyg-team/pytorch_geometric/issues/2040#issuecomment-766610625
 ENV LD_LIBRARY_PATH="/opt/conda/envs/myria3d/lib/:$LD_LIBRARY_PATH"
+
+RUN pip install --upgrade comet_ml
 
 # Check success of environment creation.
 RUN python -c "import torch_geometric;"
