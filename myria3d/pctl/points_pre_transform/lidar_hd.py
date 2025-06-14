@@ -2,7 +2,7 @@ import numpy as np
 from numpy.lib.recfunctions import append_fields
 from torch_geometric.data import Data
 
-COLORS_NORMALIZATION_MAX_VALUE = 255.0 * 256.0
+COLORS_NORMALIZATION_MAX_VALUE = 256.0 * 256.0 - 1.0
 RETURN_NUMBER_NORMALIZATION_MAX_VALUE = 7.0
 
 
