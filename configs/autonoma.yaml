@@ -114,7 +114,7 @@ datamodule:
   epsg: 3857
   data_dir: /dataset
   split_csv_path: /dataset/split.csv
-  hdf5_file_path: /dataset/data.hdf5
+  hdf5_file_path: /dataset/data_${now:%Y-%m-%d_%H-%M-%S}.hdf5
   points_pre_transform:
     _target_: functools.partial
     _args_:
