@@ -73,14 +73,19 @@ def lidar_hd_pre_transform(points):
     #     "NumberOfReturns",
     # ]
 
+    # Add XÝZ to features first
+    for dim_idx, dim in enumerate(["X", "Y", "Z"]):
+        x_list.append(pos[:, dim_idx])
+        x_features_names.append(dim)
+
     for color in ["Red", "Green", "Blue"]:
         if color in points.dtype.names:
             x_list.append(points[color])
             x_features_names.append(color)
 
     # Always add computed features
-    x_list += [rgb_avg]
-    x_features_names += ["rgb_avg"]
+    # x_list += [rgb_avg]
+    # x_features_names += ["rgb_avg"]
 
     x = np.stack(x_list, axis=0).transpose()
 
