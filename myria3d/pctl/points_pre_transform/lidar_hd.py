@@ -74,9 +74,9 @@ def lidar_hd_pre_transform(points):
     # ]
 
     # Add XÝZ to features first
-    for dim_idx, dim in enumerate(["X", "Y", "Z"]):
-        x_list.append(pos[:, dim_idx])
-        x_features_names.append(dim)
+    # for dim_idx, dim in enumerate(["X", "Y", "Z"]):
+    #     x_list.append(pos[:, dim_idx])
+    #     x_features_names.append(dim)
 
     for color in ["Red", "Green", "Blue"]:
         if color in points.dtype.names:
