@@ -185,10 +185,16 @@ class Model(LightningModule):
         if self.hparams.lr_scheduler is None:
             return optimizer
 
+        scheduler = self.hparams.lr_scheduler(optimizer)  # resolves partial
+
         return {
             "optimizer": optimizer,
-            "lr_scheduler": self.hparams.lr_scheduler(optimizer),
-            "monitor": self.hparams.monitor,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": self.hparams.monitor,
+                "interval": "epoch",
+                "frequency": 1,
+            }
         }
 
     def _get_batch_tensor_by_enumeration(self, pos_x: torch.Tensor) -> torch.Tensor:
