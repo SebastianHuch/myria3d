@@ -83,6 +83,12 @@ def lidar_hd_pre_transform(points):
             x_list.append(points[color])
             x_features_names.append(color)
 
+    # Add Normals
+    for normal in ["NormalX", "NormalY", "NormalZ"]:
+        if normal in points.dtype.names:
+            x_list.append(points[normal])
+            x_features_names.append(normal)
+        
     # Always add computed features
     # x_list += [rgb_avg]
     # x_features_names += ["rgb_avg"]

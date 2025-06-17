@@ -49,7 +49,16 @@ def pdal_read_las_array(las_path: str, epsg: str):
         np.ndarray: named array with all LAS dimensions, including extra ones, with dict-like access.
 
     """
-    p1 = pdal.Pipeline() | get_pdal_reader(las_path, epsg)
+    pipeline = {
+        "pipeline": [
+            {
+                "type": "readers.las",
+                "filename": las_path,
+                "extra_dims": "NormalX=float,NormalY=float,NormalZ=float"
+            }
+        ]
+    }
+    p1 = pdal.Pipeline(json.dumps(pipeline)) | get_pdal_reader(las_path, epsg)
     p1.execute()
     return p1.arrays[0]
 

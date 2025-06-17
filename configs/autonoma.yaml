@@ -145,7 +145,7 @@ dataset_description:
     17: bridge_deck
     19: overhead_structure
     64: human_made_object
-  d_in: 3
+  d_in: 6
   num_classes: 10
 callbacks:
   log_code:
