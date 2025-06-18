@@ -26,15 +26,15 @@ datamodule:
         GridSampling:
           _target_: torch_geometric.transforms.GridSampling
           _args_:
-          - 0.25
+          - 0.1
         MinimumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MinimumNumNodes
           _args_:
-          - 300
+          - 1000
         MaximumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MaximumNumNodes
           _args_:
-          - 40000
+          - 300000
         Center:
           _target_: torch_geometric.transforms.Center
       eval:
@@ -52,15 +52,15 @@ datamodule:
         GridSampling:
           _target_: torch_geometric.transforms.GridSampling
           _args_:
-          - 0.25
+          - 0.1
         MinimumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MinimumNumNodes
           _args_:
-          - 300
+          - 1000
         MaximumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MaximumNumNodes
           _args_:
-          - 40000
+          - 300000
         CopySampledPos:
           _target_: myria3d.pctl.transforms.transforms.CopySampledPos
         Center:
@@ -73,15 +73,15 @@ datamodule:
         GridSampling:
           _target_: torch_geometric.transforms.GridSampling
           _args_:
-          - 0.25
+          - 0.1
         MinimumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MinimumNumNodes
           _args_:
-          - 300
+          - 1000
         MaximumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MaximumNumNodes
           _args_:
-          - 40000
+          - 300000
         CopySampledPos:
           _target_: myria3d.pctl.transforms.transforms.CopySampledPos
         Center:
@@ -97,6 +97,11 @@ datamodule:
         _args_:
         - 1
         p: 0.5
+      RandomRotate:
+        _target_: torch_geometric.transforms.RandomRotate
+        _args_:
+          - 180
+        axis: 2
     normalizations:
       NullifyLowestZ:
         _target_: myria3d.pctl.transforms.transforms.NullifyLowestZ
