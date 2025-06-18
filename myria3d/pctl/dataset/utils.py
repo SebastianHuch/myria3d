@@ -55,6 +55,10 @@ def pdal_read_las_array(las_path: str, epsg: str):
                 "type": "readers.las",
                 "filename": las_path,
                 "extra_dims": "NormalX=float,NormalY=float,NormalZ=float"
+            },
+            {
+                "type": "filters.range",
+                "limits": "Withheld[0:0],Overlap[0:0]"
             }
         ]
     }
