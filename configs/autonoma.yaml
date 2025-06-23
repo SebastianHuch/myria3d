@@ -176,7 +176,7 @@ callbacks:
     _target_: pytorch_lightning.callbacks.EarlyStopping
     monitor: val/loss_epoch
     mode: min
-    patience: 10
+    patience: 100
     min_delta: 0
 model:
   optimizer:
@@ -190,8 +190,8 @@ model:
     - ${get_method:torch.optim.lr_scheduler.ReduceLROnPlateau}
     mode: min
     factor: 0.7
-    patience: 5
-    cooldown: 5
+    patience: 20
+    cooldown: 0
     verbose: true
   criterion:
     _target_: torch.nn.CrossEntropyLoss
