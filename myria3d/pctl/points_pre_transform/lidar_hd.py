@@ -1,6 +1,8 @@
 import numpy as np
 from numpy.lib.recfunctions import append_fields
 from torch_geometric.data import Data
+from myria3d.utils.utils import calc_avg_point_density
+
 
 COLORS_NORMALIZATION_MAX_VALUE = 256.0 * 256.0 - 1.0
 RETURN_NUMBER_NORMALIZATION_MAX_VALUE = 7.0
@@ -98,5 +100,8 @@ def lidar_hd_pre_transform(points):
     y = points["Classification"]
 
     data = Data(pos=pos, x=x, y=y, x_features_names=x_features_names)
+
+    # avg_density = calc_avg_point_density(pos)
+    # print(f"Average point density: {avg_density:.2f} points/m²")
 
     return data

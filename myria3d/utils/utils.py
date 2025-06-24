@@ -2,6 +2,7 @@ import logging
 import time
 import warnings
 from typing import List, Sequence
+from collections import Counter
 
 import pytorch_lightning as pl
 import rich.syntax
@@ -9,6 +10,7 @@ import rich.tree
 import torch
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
+import numpy as np
 
 
 def get_logger(name=__name__) -> logging.Logger:
@@ -176,3 +178,24 @@ def define_device_from_config_param(gpus_param):
         else (torch.device("cuda") if gpus_param == 1 else f"cuda:{int(gpus_param[0])}")
     )
     return device
+
+def calc_avg_point_density(xyz: np.ndarray):
+    """
+    Calculate average point density (points per square meter) in a point cloud.
+
+    Args:
+        xyz (np.ndarray): Nx3 array of point coordinates.
+    """
+    bin_size = 0.1  # meters
+    area_per_bin = bin_size * bin_size  # 0.01 m²
+
+    x_bins = np.floor(xyz[:, 0] / bin_size).astype(np.int32)
+    y_bins = np.floor(xyz[:, 1] / bin_size).astype(np.int32)
+    bin_keys = list(zip(x_bins, y_bins))
+
+    bin_counts = Counter(bin_keys)
+
+    densities_per_bin = np.array([count / area_per_bin for count in bin_counts.values()], dtype=np.float32)
+    avg_density = densities_per_bin.mean()
+
+    return avg_density
