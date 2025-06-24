@@ -236,7 +236,6 @@ predict:
   output_dir: /path/to/output_dir/
   ckpt_path: null
   gpus: 1
-  subtile_overlap: 40
   subtile_overlap: 0
   interpolator:
     _target_: myria3d.models.interpolation.Interpolator
