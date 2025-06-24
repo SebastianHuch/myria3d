@@ -88,6 +88,12 @@ def pdal_read_las_array(las_path: str, epsg: str):
 def pdal_read_las_array_as_float32(las_path: str, epsg: str):
     """Read LAS as a a named array, casted to floats."""
     arr = pdal_read_las_array(las_path, epsg)
+    
+    # Shift to local space
+    arr['X'] -= arr['X'].mean()
+    arr['Y'] -= arr['Y'].mean()
+    arr['Z'] -= arr['Z'].mean()
+    
     all_floats = np.dtype({"names": arr.dtype.names, "formats": ["f4"] * len(arr.dtype.names)})
     return arr.astype(all_floats)
 
