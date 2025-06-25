@@ -34,8 +34,16 @@ def get_mosaic_of_centers_from_bounds(
         raise ValueError("subtile_overlap must be positive.")
 
     step = subtile_width - subtile_overlap
-    x_centers = np.arange(min_xy[0] + subtile_width / 2, max_xy[0], step)
-    y_centers = np.arange(min_xy[1] + subtile_width / 2, max_xy[1], step)
+    x_centers = np.arange(
+        min_xy[0] + subtile_width / 2,
+        max_xy[0] + step / 2,
+        step
+    )
+    y_centers = np.arange(
+        min_xy[1] + subtile_width / 2,
+        max_xy[1] + step / 2,
+        step
+    )
 
     return [np.array([x, y]) for x in x_centers for y in y_centers]
 
@@ -255,6 +263,7 @@ def count_cloud_samples(
         if np.any(mask):
             count += 1
 
+    print(f"Total number of filled subtiles: {count}")
     return count
 
 def load_cloud(las_path: str, epsg: str):
