@@ -51,6 +51,7 @@ def pdal_read_las_array(las_path: str, epsg: str):
     """
     try:
         # Try to load extra dimensions Nx Ny Nz
+        print(f"Loading {las_path} with normals...")
         pipeline = {
             "pipeline": [
                 {
@@ -66,8 +67,10 @@ def pdal_read_las_array(las_path: str, epsg: str):
         }
         p1 = pdal.Pipeline(json.dumps(pipeline)) | get_pdal_reader(las_path, epsg)
         p1.execute()
+        print(f"Loaded {las_path} with normals!")
     except RuntimeError:
         # No extra dimensions
+        print(f"No Normals available. Loading {las_path} without normals...")
         pipeline = {
             "pipeline": [
                 {
@@ -82,6 +85,7 @@ def pdal_read_las_array(las_path: str, epsg: str):
         }
         p1 = pdal.Pipeline(json.dumps(pipeline)) | get_pdal_reader(las_path, epsg)
         p1.execute()
+        print(f"Loaded {las_path} without normals!")
     return p1.arrays[0]
 
 
@@ -166,6 +170,8 @@ def split_cloud_into_samples(
     subtile_width: Number,
     epsg: str,
     subtile_overlap: Number = 0,
+    points=None,
+    kd_tree=None,
 ):
     """Split LAS point cloud into samples.
 
@@ -175,19 +181,20 @@ def split_cloud_into_samples(
         subtile_width (Number): width of receptive field.
         epsg (str): epsg to force the reading with
         subtile_overlap (Number, optional): overlap between adjacent tiles. Defaults to 0.
+        points (np.ndarray, optional): named array with all LAS dimensions, including extra ones, with dict-like access.
+        kd_tree (cKDTree, optional): previously build cKDTree if avail
 
     Yields:
         _type_: idx_in_original_cloud, and points of sample in pdal input format casted as floats.
 
     """
-    points = pdal_read_las_array_as_float32(las_path, epsg)
-    pos = np.asarray([points["X"], points["Y"], points["Z"]], dtype=np.float32).transpose()
-    kd_tree = cKDTree(pos[:, :2] - pos[:, :2].min(axis=0))
+    if points is None or kd_tree is None:
+        points, _, kd_tree = load_cloud_and_tree(las_path, epsg)
+
     XYs = get_mosaic_of_centers(tile_width, subtile_width, subtile_overlap=subtile_overlap)
     for center in XYs:
-        radius = subtile_width // 2  # Square receptive field.
-        minkowski_p = np.inf
-        sample_idx = np.array(kd_tree.query_ball_point(center, r=radius, p=minkowski_p))
+        radius = subtile_width // 2
+        sample_idx = np.array(kd_tree.query_ball_point(center, r=radius, p=np.inf))
         if not len(sample_idx):
             # no points in this receptive fields
             continue
@@ -200,20 +207,29 @@ def count_cloud_samples(
     subtile_width: Number,
     epsg: str,
     subtile_overlap: Number = 0,
+    points=None,
+    kd_tree=None,
 ):
-    points = pdal_read_las_array_as_float32(las_path, epsg)
-    pos = np.asarray([points["X"], points["Y"], points["Z"]], dtype=np.float32).transpose()
-    kd_tree = cKDTree(pos[:, :2] - pos[:, :2].min(axis=0))
+    if points is None or kd_tree is None:
+        points, _, kd_tree = load_cloud_and_tree(las_path, epsg)
+
     XYs = get_mosaic_of_centers(tile_width, subtile_width, subtile_overlap=subtile_overlap)
     count = 0
     for center in XYs:
         radius = subtile_width // 2
-        minkowski_p = np.inf
-        sample_idx = np.array(kd_tree.query_ball_point(center, r=radius, p=minkowski_p))
+        sample_idx = np.array(kd_tree.query_ball_point(center, r=radius, p=np.inf))
         if not len(sample_idx):
             continue
         count += 1
     return count
+
+def load_cloud_and_tree(las_path: str, epsg: str):
+    points = pdal_read_las_array_as_float32(las_path, epsg)
+    pos = np.asarray([points["X"], points["Y"], points["Z"]], dtype=np.float32).T
+    print("Building KD Tree...")
+    kd_tree = cKDTree(pos[:, :2] - pos[:, :2].min(axis=0))
+    print("Built KD Tree!")
+    return points, pos, kd_tree
 
 def pre_filter_below_n_points(data, min_num_nodes=1):
     return data.pos.shape[0] < min_num_nodes

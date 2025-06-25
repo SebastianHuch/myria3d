@@ -10,6 +10,7 @@ from myria3d.pctl.dataset.utils import (
     pre_filter_below_n_points,
     split_cloud_into_samples,
     count_cloud_samples,
+    load_cloud_and_tree
 )
 from myria3d.pctl.points_pre_transform.lidar_hd import lidar_hd_pre_transform
 
@@ -39,27 +40,41 @@ class InferenceDataset(IterableDataset):
         self.subtile_width = subtile_width
         self.subtile_overlap = subtile_overlap
 
+        self._points = None
+        self._pos = None
+        self._kd_tree = None
+
+    def _load_cloud_once(self):
+        if self._points is None or self._kd_tree is None:
+            self._points, self._pos, self._kd_tree = load_cloud_and_tree(self.las_file, self.epsg)
+
     def __iter__(self):
         return self.get_iterator()
     
     def __len__(self):
         """Return the number of samples in the dataset."""
+        self._load_cloud_once()
         return count_cloud_samples(
             self.las_file,
             self.tile_width,
             self.subtile_width,
             self.epsg,
             self.subtile_overlap,
+            points=self._points,
+            kd_tree=self._kd_tree,
         )
 
     def get_iterator(self):
         """Yield subtiles from all tiles in an exhaustive fashion."""
+        self._load_cloud_once()
         for idx_in_original_cloud, sample_points in split_cloud_into_samples(
             self.las_file,
             self.tile_width,
             self.subtile_width,
             self.epsg,
             self.subtile_overlap,
+            points=self._points,
+            kd_tree=self._kd_tree,
         ):
             sample_data = self.points_pre_transform(sample_points)
             sample_data["x"] = torch.from_numpy(sample_data["x"])
