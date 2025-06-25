@@ -60,7 +60,7 @@ class InferenceDataset(IterableDataset):
             self.epsg,
             self.subtile_overlap,
             points=self._points,
-            kd_tree=self._pos,
+            pos=self._pos,
         )
 
     def get_iterator(self):
@@ -73,7 +73,7 @@ class InferenceDataset(IterableDataset):
             self.epsg,
             self.subtile_overlap,
             points=self._points,
-            kd_tree=self._pos,
+            pos=self._pos,
         ):
             sample_data = self.points_pre_transform(sample_points)
             sample_data["x"] = torch.from_numpy(sample_data["x"])
