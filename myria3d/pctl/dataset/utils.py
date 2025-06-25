@@ -24,6 +24,20 @@ def find_file_in_dir(data_dir: str, basename: str) -> str:
     files = glob.glob(query, recursive=True)
     return files[0]
 
+def get_mosaic_of_centers_from_bounds(
+    min_xy: np.ndarray,
+    max_xy: np.ndarray,
+    subtile_width: Number,
+    subtile_overlap: Number = 0,
+):
+    if subtile_overlap < 0:
+        raise ValueError("subtile_overlap must be positive.")
+
+    step = subtile_width - subtile_overlap
+    x_centers = np.arange(min_xy[0] + subtile_width / 2, max_xy[0], step)
+    y_centers = np.arange(min_xy[1] + subtile_width / 2, max_xy[1], step)
+
+    return [np.array([x, y]) for x in x_centers for y in y_centers]
 
 def get_mosaic_of_centers(tile_width: Number, subtile_width: Number, subtile_overlap: Number = 0):
     if subtile_overlap < 0:
@@ -191,7 +205,9 @@ def split_cloud_into_samples(
         points, pos = load_cloud(las_path, epsg)
     
     xy_pos = pos[:, :2]  # shape (N, 2)
-    XYs = get_mosaic_of_centers(tile_width, subtile_width, subtile_overlap=subtile_overlap)
+    min_xy = xy_pos.min(axis=0)
+    max_xy = xy_pos.max(axis=0)
+    XYs = get_mosaic_of_centers_from_bounds(min_xy, max_xy, subtile_width, subtile_overlap=subtile_overlap)
     radius = subtile_width // 2
 
     for center in XYs:
@@ -222,7 +238,9 @@ def count_cloud_samples(
         points, pos = load_cloud(las_path, epsg)
 
     xy_pos = pos[:, :2]
-    XYs = get_mosaic_of_centers(tile_width, subtile_width, subtile_overlap=subtile_overlap)
+    min_xy = xy_pos.min(axis=0)
+    max_xy = xy_pos.max(axis=0)
+    XYs = get_mosaic_of_centers_from_bounds(min_xy, max_xy, subtile_width, subtile_overlap=subtile_overlap)
     radius = subtile_width // 2
 
     count = 0
@@ -243,6 +261,13 @@ def load_cloud(las_path: str, epsg: str):
     points = pdal_read_las_array_as_float32(las_path, epsg)
     pos = np.asarray([points["X"], points["Y"], points["Z"]], dtype=np.float32).T
     return points, pos
+
+def calc_tile_width(xy):
+    min_xy = xy.min(axis=0)
+    max_xy = xy.max(axis=0)
+    cloud_extent_xy = max_xy - min_xy
+    tile_width = float(np.max(cloud_extent_xy))
+    return tile_width
 
 def pre_filter_below_n_points(data, min_num_nodes=1):
     return data.pos.shape[0] < min_num_nodes
