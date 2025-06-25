@@ -10,7 +10,7 @@ from myria3d.pctl.dataset.utils import (
     pre_filter_below_n_points,
     split_cloud_into_samples,
     count_cloud_samples,
-    load_cloud_and_tree
+    load_cloud
 )
 from myria3d.pctl.points_pre_transform.lidar_hd import lidar_hd_pre_transform
 
@@ -42,11 +42,10 @@ class InferenceDataset(IterableDataset):
 
         self._points = None
         self._pos = None
-        self._kd_tree = None
 
     def _load_cloud_once(self):
-        if self._points is None or self._kd_tree is None:
-            self._points, self._pos, self._kd_tree = load_cloud_and_tree(self.las_file, self.epsg)
+        if self._points is None or self._pos is None:
+            self._points, self._pos = load_cloud(self.las_file, self.epsg)
 
     def __iter__(self):
         return self.get_iterator()
@@ -61,7 +60,7 @@ class InferenceDataset(IterableDataset):
             self.epsg,
             self.subtile_overlap,
             points=self._points,
-            kd_tree=self._kd_tree,
+            kd_tree=self._pos,
         )
 
     def get_iterator(self):
@@ -74,7 +73,7 @@ class InferenceDataset(IterableDataset):
             self.epsg,
             self.subtile_overlap,
             points=self._points,
-            kd_tree=self._kd_tree,
+            kd_tree=self._pos,
         ):
             sample_data = self.points_pre_transform(sample_points)
             sample_data["x"] = torch.from_numpy(sample_data["x"])
