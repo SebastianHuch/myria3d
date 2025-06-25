@@ -133,8 +133,8 @@ datamodule:
   subtile_width: 100
   subtile_overlap_train: 0
   subtile_overlap_predict: ${predict.subtile_overlap}
-  batch_size: 8
-  num_workers: 8
+  batch_size: 64
+  num_workers: 64
   prefetch_factor: 3
 dataset_description:
   _convert_: all
@@ -209,7 +209,7 @@ model:
     decimation: 4
     return_logits: true
   interpolation_k: ${predict.interpolator.interpolation_k}
-  num_workers: 8
+  num_workers: 64
   iou:
     _target_: functools.partial
     _args_:
