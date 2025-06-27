@@ -20,6 +20,7 @@ from pytorch_lightning import (
     seed_everything,
 )
 from pytorch_lightning.loggers.logger import Logger
+from pytorch_lightning.tuner.tuning import Tuner
 
 from myria3d.models.model import Model
 from myria3d.utils import utils
@@ -114,7 +115,7 @@ def train(config: DictConfig) -> Trainer:
         if config.task.auto_lr_find:
             log.info("Finding best lr with auto_lr_find!")
             # Run learn ing rate finder
-            lr_finder = trainer.tuner.lr_find(
+            lr_finder = Tuner(trainer).lr_find(
                 model,
                 datamodule=datamodule,
                 min_lr=1e-6,
