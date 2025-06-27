@@ -104,4 +104,9 @@ def lidar_hd_pre_transform(points):
     # avg_density = calc_avg_point_density(pos)
     # print(f"Average point density: {avg_density:.2f} points/m²")
 
+    # # Calc occurences per class
+    # labels, counts = np.unique(y, return_counts=True)
+    # counts_per_class = dict(zip(labels.tolist(), counts.tolist()))
+    # print(counts_per_class)
+
     return data
