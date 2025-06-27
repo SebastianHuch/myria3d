@@ -24,10 +24,12 @@ class CustomCompose(BaseTransform):
                 if len(data) == 0:
                     return None
             else:
+                num_pts = data["pos"].shape[0]
                 data = transform(data)
                 # if type(transform) == GridSampling:
                 #     avg_density_aft = calc_avg_point_density(data["pos"].numpy())
                 #     print(f"Average point density: {avg_density:.2f} -> {avg_density_aft:.2f} points/m²")
+                    print(f"Points: {num_pts} -> {data['pos'].shape[0]}")
                 if data is None or data.num_nodes == 0:
                     return None
         return data
