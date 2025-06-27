@@ -178,6 +178,9 @@ callbacks:
     mode: min
     patience: 100
     min_delta: 0
+  model_detailed_metrics:
+    _target_: myria3d.callbacks.metric_callbacks.ModelMetrics
+    num_classes: ${model.num_classes}
 model:
   optimizer:
     _target_: functools.partial
