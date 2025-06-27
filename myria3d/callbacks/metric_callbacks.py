@@ -98,7 +98,7 @@ class ModelMetrics(Callback):
     def on_train_epoch_end(self, trainer, pl_module):
         self._end_of_epoch("train", pl_module)
 
-    def on_val_epoch_end(self, trainer, pl_module):
+    def on_validation_epoch_end(self, trainer, pl_module):
         self._end_of_epoch("val", pl_module)
 
     def on_test_epoch_end(self, trainer, pl_module):
