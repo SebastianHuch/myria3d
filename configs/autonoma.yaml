@@ -150,6 +150,17 @@ dataset_description:
     17: bridge_deck
     19: overhead_structure
     64: human_made_object
+  classification_probas:
+    2.0: 0.193677
+    5.0: 0.282667
+    6.0: 0.234190
+    7.0: 0.011751
+    9.0: 0.003259
+    10.0: 0.004009
+    11.0: 0.156221
+    17.0: 0.008000
+    19.0: 0.015058
+    64.0: 0.091369
   d_in: 3
   num_classes: 10
 callbacks:
@@ -203,6 +214,7 @@ model:
   d_in: ${dataset_description.d_in}
   num_classes: ${dataset_description.num_classes}
   classification_dict: ${dataset_description.classification_dict}
+  classification_probas: ${dataset_description.classification_probas}
   ckpt_path: null
   neural_net_class_name: PyGRandLANet
   neural_net_hparams:

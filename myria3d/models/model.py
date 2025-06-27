@@ -63,6 +63,13 @@ class Model(LightningModule):
 
         self.softmax = nn.Softmax(dim=1)
         self.criterion = kwargs.get("criterion")
+        if kwargs.get("classification_probas"):
+            # build weights from the provided class probabilities
+            probas = torch.tensor(list(kwargs.get("classification_probas").values()))
+            # invert & normalize so that rare classes (low prob) get higher weight
+            weights = 1.0 / (probas + 1e-6)
+            weights = weights / weights.sum() * probas.numel()
+            self.criterion.weight = weights
 
     def forward(self, batch: Batch) -> torch.Tensor:
         """Forward pass of neural network.
