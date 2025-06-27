@@ -218,7 +218,7 @@ model:
     absent_score: 1.0
   momentum: 0.9
   monitor: val/loss_epoch
-  lr: 0.01
+  lr: 0.003651040832983768
 logger:
   comet:
     _target_: pytorch_lightning.loggers.comet.CometLogger
