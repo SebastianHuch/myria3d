@@ -249,7 +249,7 @@ predict:
   subtile_overlap: 0
   interpolator:
     _target_: myria3d.models.interpolation.Interpolator
-    interpolation_k: 1
+    interpolation_k: 10
     classification_dict: ${dataset_description.classification_dict}
     probas_to_save: []
     predicted_classification_channel: PredictedClassification
