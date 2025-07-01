@@ -5,8 +5,8 @@ print_config: true
 ignore_warnings: true
 trainer:
   _target_: pytorch_lightning.Trainer
-  min_epochs: 300
-  max_epochs: 350
+  min_epochs: 200
+  max_epochs: 200
   log_every_n_steps: 1
   num_sanity_val_steps: 2
   accumulate_grad_batches: 1
@@ -26,7 +26,7 @@ datamodule:
         GridSampling:
           _target_: torch_geometric.transforms.GridSampling
           _args_:
-          - 0.25
+          - 0.1
         MinimumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MinimumNumNodes
           _args_:
@@ -52,7 +52,7 @@ datamodule:
         GridSampling:
           _target_: torch_geometric.transforms.GridSampling
           _args_:
-          - 0.25
+          - 0.1
         MinimumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MinimumNumNodes
           _args_:
@@ -73,7 +73,7 @@ datamodule:
         GridSampling:
           _target_: torch_geometric.transforms.GridSampling
           _args_:
-          - 0.25
+          - 0.1
         MinimumNumNodes:
           _target_: myria3d.pctl.transforms.transforms.MinimumNumNodes
           _args_:
@@ -130,7 +130,7 @@ datamodule:
     - ${get_method:myria3d.pctl.dataset.utils.pre_filter_below_n_points}
     min_num_nodes: 1
   tile_width: 1000
-  subtile_width: 100
+  subtile_width: 50
   subtile_overlap_train: 0
   subtile_overlap_predict: ${predict.subtile_overlap}
   batch_size: 64
@@ -138,31 +138,23 @@ datamodule:
   prefetch_factor: 3
 dataset_description:
   _convert_: all
-  classification_preprocessing_dict: {}
+  classification_preprocessing_dict: {7: 1, 9: 1, 10: 1, 17: 1, 19: 1}
   classification_dict:
+    1: unclassified
     2: ground
     5: high_vegetation
     6: building
-    7: low_point
-    9: water
-    10: rail
     11: road_surface
-    17: bridge_deck
-    19: overhead_structure
     64: human_made_object
   classification_probas:
-    2.0: 0.193677
-    5.0: 0.282667
-    6.0: 0.234190
-    7.0: 0.011751
-    9.0: 0.003259
-    10.0: 0.004009
-    11.0: 0.156221
-    17.0: 0.008000
-    19.0: 0.015058
-    64.0: 0.091369
+    1: 0.03318
+    2: 0.23338
+    5: 0.34053
+    6: 0.28215
+    11: 0.09118
+    64: 0.01959
   d_in: 3
-  num_classes: 10
+  num_classes: 6
 callbacks:
   log_code:
     _target_: myria3d.callbacks.comet_callbacks.LogCode
@@ -177,7 +169,7 @@ callbacks:
     _target_: pytorch_lightning.callbacks.ModelCheckpoint
     monitor: val/loss_epoch
     mode: min
-    save_top_k: 1
+    save_top_k: 3
     save_last: true
     verbose: true
     dirpath: checkpoints/
@@ -196,16 +188,19 @@ model:
   optimizer:
     _target_: functools.partial
     _args_:
-    - ${get_method:torch.optim.Adam}
+    - ${get_method:torch.optim.AdamW}
     lr: ${model.lr}
   lr_scheduler:
     _target_: functools.partial
     _args_:
-    - ${get_method:torch.optim.lr_scheduler.ReduceLROnPlateau}
-    mode: min
-    factor: 0.7
-    patience: 20
-    cooldown: 0
+    - ${get_method:torch.optim.lr_scheduler.OneCycleLR}
+    epochs: ${trainer.min_epochs}  # total number of epochs
+    steps_per_epoch: 1             # ALWAYS 1 because lr_scheduler is set to "interval": "epoch"
+    pct_start: 0.25                # fraction of cycle spent increasing LR
+    anneal_strategy: 'cos'
+    max_lr: ${model.lr}
+    div_factor: 10                 # initial_lr = max_lr/div_factor
+    final_div_factor: 100          # min_lr = initial_lr/final_div_factor
     verbose: true
   criterion:
     _target_: torch.nn.CrossEntropyLoss
@@ -233,7 +228,7 @@ model:
     absent_score: 1.0
   momentum: 0.9
   monitor: val/loss_epoch
-  lr: 0.003651040832983768
+  lr: 0.003651040832983768  # = max_lr in OneCycle
 logger:
   comet:
     _target_: pytorch_lightning.loggers.comet.CometLogger
