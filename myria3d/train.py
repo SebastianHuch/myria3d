@@ -114,7 +114,7 @@ def train(config: DictConfig) -> Trainer:
     if task_name == TASK_NAMES.FIT.value:
         if config.task.auto_lr_find:
             log.info("Finding best lr with auto_lr_find!")
-            # Run learn ing rate finder
+            # Run learning rate finder
             lr_finder = Tuner(trainer).lr_find(
                 model,
                 datamodule=datamodule,

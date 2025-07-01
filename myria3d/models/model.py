@@ -62,7 +62,7 @@ class Model(LightningModule):
         self.model = neural_net_class(**kwargs.get("neural_net_hparams"))
 
         self.softmax = nn.Softmax(dim=1)
-        self.criterion = kwargs.get("criterion")
+        self.criterion = kwargs.get("criterion", nn.CrossEntropyLoss())
         if kwargs.get("classification_probas"):
             # build weights from the provided class probabilities
             probas = torch.tensor(list(kwargs.get("classification_probas").values()))
