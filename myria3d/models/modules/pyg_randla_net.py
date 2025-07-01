@@ -52,10 +52,10 @@ class PyGRandLANet(torch.nn.Module):
         self.mlp_classif = SharedMLP([d_bottleneck, 64, 32], dropout=[0.0, 0.5])
         self.fc_classif = Linear(32, num_classes)
 
-    def forward(self, x, pos, batch, ptr):
+    def forward(self, x, pos, batch, ptr, edge_index=None):
         x = x if x is not None else pos
 
-        b1_out = self.block1(self.fc0(x), pos, batch)
+        b1_out = self.block1(self.fc0(x), pos, batch, edge_index=edge_index)
         b1_out_decimated, ptr1 = decimate(b1_out, ptr, self.decimation)
 
         b2_out = self.block2(*b1_out_decimated)
@@ -176,8 +176,10 @@ class DilatedResidualBlock(torch.nn.Module):
 
         self.lrelu = torch.nn.LeakyReLU(**lrelu02_kwargs)
 
-    def forward(self, x, pos, batch):
-        edge_index = knn_graph(pos, self.num_neighbors, batch=batch, loop=True)
+    def forward(self, x, pos, batch, edge_index=None):
+        # use precomputed if available, else fall back
+        if edge_index is None:
+            edge_index = knn_graph(pos, self.num_neighbors, batch=batch, loop=True)
 
         shortcut_of_x = self.shortcut(x)  # N, d_out
         x = self.mlp1(x)  # N, d_out//8

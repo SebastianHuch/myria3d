@@ -6,6 +6,8 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 from torch_geometric.transforms import BaseTransform
+from torch_geometric.transforms import BaseTransform
+from torch_geometric.nn.pool import knn_graph
 
 from myria3d.utils import utils
 
@@ -44,6 +46,15 @@ def subsample_data(data, num_nodes, choice: torch.Tensor):
 
     return data
 
+class PreComputeEdgeIndex(BaseTransform):
+    def __init__(self, k: int):
+        self.k = k
+
+    def __call__(self, data):
+        data['edge_index'] = knn_graph(
+            data.pos, self.k, batch=data.batch, loop=True
+        )
+        return data
 
 class MaximumNumNodes(BaseTransform):
     def __init__(self, num: int):

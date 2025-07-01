@@ -37,6 +37,9 @@ datamodule:
           - 300000
         Center:
           _target_: torch_geometric.transforms.Center
+        PreComputeEdgeIndex:
+          _target_: myria3d.pctl.transforms.transforms.PreComputeEdgeIndex
+          k: ${model.neural_net_hparams.num_neighbors}
       eval:
         TargetTransform:
           _target_: myria3d.pctl.transforms.transforms.TargetTransform
@@ -65,6 +68,9 @@ datamodule:
           _target_: myria3d.pctl.transforms.transforms.CopySampledPos
         Center:
           _target_: torch_geometric.transforms.Center
+        PreComputeEdgeIndex:
+          _target_: myria3d.pctl.transforms.transforms.PreComputeEdgeIndex
+          k: ${model.neural_net_hparams.num_neighbors}
       predict:
         DropPointsByClass:
           _target_: myria3d.pctl.transforms.transforms.DropPointsByClass
@@ -86,6 +92,9 @@ datamodule:
           _target_: myria3d.pctl.transforms.transforms.CopySampledPos
         Center:
           _target_: torch_geometric.transforms.Center
+        PreComputeEdgeIndex:
+          _target_: myria3d.pctl.transforms.transforms.PreComputeEdgeIndex
+          k: ${model.neural_net_hparams.num_neighbors}
     augmentations:
       x_flip:
         _target_: torch_geometric.transforms.RandomFlip
