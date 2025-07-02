@@ -147,23 +147,21 @@ datamodule:
   prefetch_factor: 3
 dataset_description:
   _convert_: all
-  classification_preprocessing_dict: {7: 1, 9: 1, 10: 1, 17: 1, 19: 1}
+  classification_preprocessing_dict: {7: 65, 9: 65, 10: 65, 17: 65, 19: 65}
   classification_dict:
-    1: unclassified
     2: ground
     5: high_vegetation
     6: building
     11: road_surface
     64: human_made_object
   classification_probas:
-    1: 0.03318
-    2: 0.23338
-    5: 0.34053
-    6: 0.28215
-    11: 0.09118
-    64: 0.01959
+    2: 0.241386
+    5: 0.352219
+    6: 0.291827
+    11: 0.094310
+    64: 0.020258
   d_in: 3
-  num_classes: 6
+  num_classes: 5
 callbacks:
   log_code:
     _target_: myria3d.callbacks.comet_callbacks.LogCode
