@@ -92,14 +92,13 @@ class Model(LightningModule):
 
         # During evaluation on test data and inference, we interpolate predictions back to original positions
         # KNN is way faster on CPU than on GPU by a 3 to 4 factor.
-        logits = logits.cpu()
-        batch_y = self._get_batch_tensor_by_enumeration(batch.idx_in_original_cloud)
+        batch_y = self._get_batch_tensor_by_enumeration(batch.idx_in_original_cloud).to(logits.device)
         logits = knn_interpolate(
-            logits.cpu(),
-            batch.copies["pos_sampled_copy"].cpu(),
-            batch.copies["pos_copy"].cpu(),
-            batch_x=batch.batch.cpu(),
-            batch_y=batch_y.cpu(),
+            logits,
+            batch.copies["pos_sampled_copy"],
+            batch.copies["pos_copy"],
+            batch_x=batch.batch,
+            batch_y=batch_y,
             k=self.hparams.interpolation_k,
             num_workers=self.hparams.num_workers,
         )
