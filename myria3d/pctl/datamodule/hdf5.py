@@ -40,6 +40,7 @@ class HDF5LidarDataModule(LightningDataModule):
         num_workers: int = 1,
         prefetch_factor: int = 2,
         transforms: Optional[Dict[str, TRANSFORMS_LIST]] = None,
+        persistent_workers = False,
         **kwargs,
     ):
         super().__init__()
@@ -61,6 +62,7 @@ class HDF5LidarDataModule(LightningDataModule):
 
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.persistent_workers = persistent_workers
         self.prefetch_factor = prefetch_factor
 
         t = transforms
@@ -149,6 +151,7 @@ class HDF5LidarDataModule(LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             prefetch_factor=self.prefetch_factor,
+            persistent_workers=self.persistent_workers,
             shuffle=True,
         )
 
@@ -158,6 +161,7 @@ class HDF5LidarDataModule(LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             prefetch_factor=self.prefetch_factor,
+            persistent_workers=self.persistent_workers
         )
 
     def test_dataloader(self):
