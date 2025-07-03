@@ -145,6 +145,7 @@ datamodule:
   subtile_overlap_predict: ${predict.subtile_overlap}
   batch_size: 64
   num_workers: 64
+  persistent_workers: true
   prefetch_factor: 3
 dataset_description:
   _convert_: all
