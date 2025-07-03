@@ -123,7 +123,8 @@ class Model(LightningModule):
         targets, logits = self.forward(batch)
         self.criterion = self.criterion.to(logits.device)
         loss = self.criterion(logits, targets)
-        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=False)
+        bs = batch.num_graphs
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=False, sync_dist=True, batch_size=bs)
         return {"loss": loss, "logits": logits, "targets": targets}
 
     def validation_step(self, batch: Batch, batch_idx: int) -> dict:
@@ -141,7 +142,8 @@ class Model(LightningModule):
         targets, logits = self.forward(batch)
         self.criterion = self.criterion.to(logits.device)
         loss = self.criterion(logits, targets)
-        self.log("val/loss", loss, on_step=True, on_epoch=True)
+        bs = batch.num_graphs
+        self.log("val/loss", loss, on_step=True, on_epoch=True, sync_dist=True, batch_size=bs)
         return {"loss": loss, "logits": logits, "targets": targets}
 
     def test_step(self, batch: Batch, batch_idx: int):
@@ -158,7 +160,8 @@ class Model(LightningModule):
         targets, logits = self.forward(batch)
         self.criterion = self.criterion.to(logits.device)
         loss = self.criterion(logits, targets)
-        self.log("test/loss", loss, on_step=False, on_epoch=True)
+        bs = batch.num_graphs
+        self.log("test/loss", loss, on_step=False, on_epoch=True, sync_dist=True, batch_size=bs)
         return {"loss": loss, "logits": logits, "targets": targets}
 
     def predict_step(self, batch: Batch) -> dict:

@@ -1,6 +1,7 @@
 import math
 import re
 from typing import Dict, List
+from functools import partial
 
 import numpy as np
 import torch
@@ -178,6 +179,11 @@ class NormalizePos(BaseTransform):
     def __repr__(self):
         return "{}()".format(self.__class__.__name__)
 
+def _preprocessing_mapper(class_code, mapping):
+    return mapping.get(class_code, class_code)
+
+def _class_code_mapper(class_code, mapping):
+    return mapping.get(class_code)
 
 class TargetTransform(BaseTransform):
     """
@@ -232,7 +238,7 @@ class TargetTransform(BaseTransform):
     def _set_preprocessing_mapper(self, classification_preprocessing_dict):
         """Set mapper from source classification code to another code."""
         d = {key: value for key, value in classification_preprocessing_dict.items()}
-        self.preprocessing_mapper = np.vectorize(lambda class_code: d.get(class_code, class_code))
+        self.preprocessing_mapper = np.vectorize(partial(_preprocessing_mapper, mapping=d))
 
     def _set_mapper(self, classification_dict):
         """Set mapper from source classification code to consecutive integers."""
@@ -243,7 +249,7 @@ class TargetTransform(BaseTransform):
         # Here we update the dict so that code 65 remains unchanged.
         # Indeed, 65 is reserved for noise/artefacts points, that will be deleted by transform "DropPointsByClass".
         d.update({65: 65})
-        self.mapper = np.vectorize(lambda class_code: d.get(class_code))
+        self.mapper = np.vectorize(partial(_class_code_mapper, mapping=d))
 
 
 class DropPointsByClass(BaseTransform):

@@ -6,6 +6,15 @@ except ImportError:
         "Warning: package comet_ml not found. This may break things if you use a comet callback."
     )
 
+import torch
+torch.multiprocessing.set_start_method('fork', force=True)
+
+import warnings
+warnings.filterwarnings(
+  "ignore",
+  message="pkg_resources is deprecated as an API.*"
+)
+
 import copy
 import os
 from typing import List

@@ -67,6 +67,7 @@ class ModelMetrics(Callback):
                 on_epoch=True,
                 on_step=False,
                 metric_attribute=metric_name_for_log,
+                sync_dist=True
             )
             metric.reset()  # always reset state when using compute().
 
@@ -81,6 +82,7 @@ class ModelMetrics(Callback):
                     on_step=False,
                     on_epoch=True,
                     metric_attribute=metric_name_for_log,
+                    sync_dist=True
                 )
             metric.reset()  # always reset state when using compute().
 
