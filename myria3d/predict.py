@@ -1,7 +1,7 @@
 import os
 import os.path as osp
 import sys
-
+import copy
 import hydra
 import torch
 from omegaconf import DictConfig
@@ -61,13 +61,34 @@ def predict(config: DictConfig) -> str:
         ),
         entropy_channel=config.predict.interpolator.get("entropy_channel", "entropy"),
     )
+    use_tta = bool(config.predict.get("use_tta", False))
+    AUGS = [
+        {"flip_x": False, "flip_y": False},
+        {"flip_x": True,  "flip_y": False},
+        {"flip_x": False, "flip_y": True},
+        {"flip_x": True,  "flip_y": True},
+    ]
 
     for batch in tqdm(datamodule.predict_dataloader()):
         batch.to(device)
-        logits = model.predict_step(batch)["logits"]
-        itp.store_predictions(logits, batch.idx_in_original_cloud)
 
-    # build suffix parameters: grid size (mm, 4 digits), overlap (m, 4 digits), and max points (6 digits)
+        if use_tta:
+            logits_acc = None
+            for a in AUGS:
+                b = copy.copy(batch)
+                b.pos = batch.pos.clone()
+                if a["flip_x"]:
+                    b.pos[:, 0] *= -1
+                if a["flip_y"]:
+                    b.pos[:, 1] *= -1
+                l = model.predict_step(b)["logits"]
+                logits_acc = l if logits_acc is None else logits_acc + l
+            logits_out = logits_acc / len(AUGS)
+        else:
+            logits_out = model.predict_step(batch)["logits"]
+
+        itp.store_predictions(logits_out, batch.idx_in_original_cloud)
+
     grid_m = config.datamodule.transforms.preparations.predict.GridSampling._args_[0]
     grid_mm = int(grid_m * 1000)
     overlap_m = int(config.predict.subtile_overlap)
