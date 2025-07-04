@@ -120,15 +120,25 @@ class Interpolator:
         return reduced_logits[idx_in_full_cloud], idx_in_full_cloud
 
     @torch.no_grad()
-    def reduce_predictions_and_save(self, raw_path: str, output_dir: str, epsg: str) -> str:
+    def reduce_predictions_and_save(
+        self,
+        raw_path: str,
+        output_dir: str,
+        epsg: str,
+        grid_resolution_mm: Optional[int] = None,
+        subtile_overlap_m: Optional[int] = None,
+        max_points: Optional[int] = None,
+    ) -> str:
         """Interpolate all predicted probabilites to their original points in LAS file, and save.
 
         Args:
-            interpolation (torch.Tensor, torch.Tensor): output of _interpolate, of which we need the logits.
-            basename: str: file basename to save it with the same one
-            output_dir (Optional[str], optional): Directory to save output LAS with new predicted classification, entropy,
-            and probabilities. Defaults to None.
+            raw_path (str): Path of input LAS.
+            output_dir (str): Directory to save output LAS with new predicted classification, entropy,
+            and probabilities.
             epsg (str): epsg to force the reading with
+            grid_resolution_mm (int, optional): grid cell size in millimeters for filename suffix.
+            subtile_overlap_m (int, optional): subtile overlap in meters for filename suffix.
+            max_points (int, optional): MaximumNumNodes value for filename suffix.
         Returns:
             str: path of the updated, saved LAS file.
 
@@ -173,9 +183,17 @@ class Interpolator:
         del idx_in_full_cloud
 
         os.makedirs(output_dir, exist_ok=True)
-        out_f = os.path.join(output_dir, basename)
-        out_f = os.path.abspath(out_f)
-        log.info(f"Updated LAS ({basename}) will be saved to: \n {output_dir}\n")
+        name, ext = os.path.splitext(basename)
+        if grid_resolution_mm is not None and subtile_overlap_m is not None:
+            suffix = f"_grid{grid_resolution_mm:04d}_tile{subtile_overlap_m:04d}"
+            if max_points is not None:
+                suffix += f"_maxpoints{max_points:06d}"
+            new_basename = f"{name}{suffix}{ext}"
+        else:
+            new_basename = basename
+
+        out_f = os.path.abspath(os.path.join(output_dir, new_basename))
+        log.info(f"Updated LAS ({new_basename}) will be saved to: \n {output_dir}\n")
         log.info("Saving...")
         writer_params["extra_dims"] = "all"
         pipeline = pdal.Writer.las(filename=out_f, **writer_params).pipeline(las)

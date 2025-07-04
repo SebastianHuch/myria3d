@@ -67,7 +67,18 @@ def predict(config: DictConfig) -> str:
         logits = model.predict_step(batch)["logits"]
         itp.store_predictions(logits, batch.idx_in_original_cloud)
 
+    # build suffix parameters: grid size (mm, 4 digits), overlap (m, 4 digits), and max points (6 digits)
+    grid_m = config.datamodule.transforms.preparations.predict.GridSampling._args_[0]
+    grid_mm = int(grid_m * 1000)
+    overlap_m = int(config.predict.subtile_overlap)
+    max_nodes = int(config.datamodule.transforms.preparations.predict.MaximumNumNodes._args_[0])
+
     out_f = itp.reduce_predictions_and_save(
-        config.predict.src_las, config.predict.output_dir, config.datamodule.get("epsg")
+        config.predict.src_las,
+        config.predict.output_dir,
+        config.datamodule.get("epsg"),
+        grid_resolution_mm=grid_mm,
+        subtile_overlap_m=overlap_m,
+        max_points=max_nodes,
     )
     return out_f
