@@ -7,6 +7,7 @@ import pdal
 import torch
 from torch.distributions import Categorical
 from torch_scatter import scatter_sum
+from torch_cluster import knn
 
 from pdaltools import las_info
 
@@ -25,6 +26,7 @@ class Interpolator:
         probas_to_save: Union[List[str], Literal["all"]] = "all",
         predicted_classification_channel: Optional[str] = "PredictedClassification",
         entropy_channel: Optional[str] = "entropy",
+        weighted: bool = True,
     ):
         """Initialization method.
         Args:
@@ -37,6 +39,7 @@ class Interpolator:
         """
 
         self.k = interpolation_k
+        self.weighted = weighted
         self.classification_dict = classification_dict
         self.predicted_classification_channel = predicted_classification_channel
         self.entropy_channel = entropy_channel
@@ -106,8 +109,7 @@ class Interpolator:
         # Concatenate elements from different batches
         logits: torch.Tensor = torch.cat(self.logits).cpu()
         idx_in_full_cloud: np.ndarray = np.concatenate(self.idx_in_full_cloud_list)
-        del self.logits
-        del self.idx_in_full_cloud_list
+        self.logits, self.idx_in_full_cloud_list = [], []        # free mem
 
         # We scatter_sum logits based on idx, in case there are multiple predictions for a point.
         # scatter_sum reorders logits based on index,they therefore match las order.
@@ -146,27 +148,66 @@ class Interpolator:
         basename = os.path.basename(raw_path)
         # Read number of points only from las metadata in order to minimize memory usage
         nb_points = get_pdal_info_metadata(raw_path)["count"]
-        logits, idx_in_full_cloud = self.reduce_predicted_logits(nb_points)
 
-        probas = torch.nn.Softmax(dim=1)(logits)
+        logits_reduced, idx_in_full_cloud = self.reduce_predicted_logits(nb_points)
+
+        # ---------- distance‑weighted k‑NN interpolation --------------------
+        full_idx = torch.arange(nb_points, dtype=torch.long)
+        known_mask = torch.zeros(nb_points, dtype=torch.bool)
+        known_mask[idx_in_full_cloud] = True
+
+        if (~known_mask).any() and self.k > 0:
+            # Read XYZ early for k‑NN
+            las, writer_params = self.load_full_las_for_update(raw_path, epsg)
+            xyz = np.vstack((las["X"], las["Y"], las["Z"])).T.astype(np.float32)
+            xyz = torch.from_numpy(xyz)
+
+            src_pos = xyz[known_mask]          # N_known × 3
+            dst_pos = xyz[~known_mask]         # N_missing × 3
+
+            # Build logits tensor aligned with src_pos order
+            full_logits = torch.zeros_like(logits_reduced)
+            full_logits[idx_in_full_cloud] = logits_reduced[idx_in_full_cloud]
+            src_logits = full_logits[known_mask]
+
+            # k‑NN (src ↔ dst)
+            row, col = knn(src_pos, dst_pos, self.k)       # src index, dst index
+            d2 = (dst_pos[col] - src_pos[row]).pow(2).sum(1).clamp_min(1e-12)
+            
+            if self.weighted:
+                w = 1.0 / d2 # inverse‑distance weights
+            else:
+                w = torch.ones_like(d2)
+
+            miss_logits = torch.zeros(dst_pos.size(0), logits_reduced.size(1))
+            miss_logits.index_add_(0, col, src_logits[row] * w.unsqueeze(1))
+            norm = torch.zeros(dst_pos.size(0), 1)
+            norm.index_add_(0, col, w.unsqueeze(1))
+            miss_logits = miss_logits / norm
+
+            # Insert back
+            full_logits[~known_mask] = miss_logits
+            logits_reduced = full_logits
+            idx_in_full_cloud = full_idx.numpy()
+
+        else:
+            # We already loaded LAS if interpolation was skipped
+            las, writer_params = self.load_full_las_for_update(raw_path, epsg)
+        # ---------------------------------------------------------------------
+
+        probas = torch.nn.Softmax(dim=1)(logits_reduced)
 
         if self.predicted_classification_channel:
-            preds = torch.argmax(logits, dim=1)
+            preds = torch.argmax(logits_reduced, dim=1)
             preds = np.vectorize(self.reverse_mapper.get)(preds)
 
-        del logits
-
-        # Read las after fetching all information to write into it
-        las, writer_params = self.load_full_las_for_update(raw_path, epsg)
-
+        # ------------ write to LAS -------------------------------------------
         for idx, class_name in enumerate(self.classification_dict.values()):
             if class_name in self.probas_to_save:
-                # NB: Values for which we do not have a prediction (i.e. artefacts) get null probabilities.
-                las[class_name][idx_in_full_cloud] = probas[:, idx]
+                las[class_name][:] = probas[:, idx].numpy()
 
         if self.predicted_classification_channel:
-            # NB: Values for which we do not have a prediction (i.e. artefacts) keep their original class.
-            las[self.predicted_classification_channel][idx_in_full_cloud] = preds
+            las[self.predicted_classification_channel][:] = preds
             log.info(
                 f"Saving predicted classes to channel {self.predicted_classification_channel}."
                 "Channel name can be changed by setting `predict.interpolator.predicted_classification_channel`."
@@ -174,13 +215,11 @@ class Interpolator:
             del preds
 
         if self.entropy_channel:
-            # NB: Values for which we do not have a prediction (i.e. artefacts) get null entropy.
-            las[self.entropy_channel][idx_in_full_cloud] = Categorical(probs=probas).entropy()
+            las[self.entropy_channel][:] = Categorical(probs=probas).entropy().numpy()
             log.info(
                 f"Saving Shannon entropy of probabilities to channel {self.entropy_channel}."
                 "Channel name can be changed by setting `predict.interpolator.entropy_channel`"
             )
-        del idx_in_full_cloud
 
         os.makedirs(output_dir, exist_ok=True)
         name, ext = os.path.splitext(basename)

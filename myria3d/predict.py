@@ -60,6 +60,7 @@ def predict(config: DictConfig) -> str:
             "predicted_classification_channel", "PredictedClassification"
         ),
         entropy_channel=config.predict.interpolator.get("entropy_channel", "entropy"),
+        weighted=config.predict.interpolator.get("weighted", True),
     )
     use_tta = bool(config.predict.get("use_tta", False))
     AUGS = [

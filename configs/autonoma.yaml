@@ -256,9 +256,11 @@ predict:
   ckpt_path: null
   gpus: 1
   subtile_overlap: 0
+  use_tta: true                # 4‑way flip test‑time augmentation
   interpolator:
     _target_: myria3d.models.interpolation.Interpolator
     interpolation_k: 10
+    weighted: true             # distance‑weighted k‑NN (false = plain vote)
     classification_dict: ${dataset_description.classification_dict}
     probas_to_save: []
     predicted_classification_channel: PredictedClassification
