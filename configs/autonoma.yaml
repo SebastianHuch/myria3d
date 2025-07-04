@@ -112,6 +112,12 @@ datamodule:
         _args_:
           - 180
         axis: 2
+      RandomBrightness:
+        _target_: myria3d.pctl.transforms.transforms_color.RandomBrightness
+        delta: 0.15
+      RandomHue:
+        _target_: myria3d.pctl.transforms.transforms_color.RandomHue
+        delta: 0.10
     normalizations:
       NullifyLowestZ:
         _target_: myria3d.pctl.transforms.transforms.NullifyLowestZ
